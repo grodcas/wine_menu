@@ -81,49 +81,99 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
+GestureDetector(
+  onTap: () {
+    if (_isFocused) {
+      setState(() {
+        _isFocused = false;
+        _focusedIndex = null;
+      });
+    }
+  },
                         // --- PageView Carousel section ---
-                        Container(
-                          height: 500,
-                          alignment: Alignment.topCenter,
-                          margin: const EdgeInsets.only(top: 0),
-                          child: PageView.builder(
-                            controller: _controller,
-                            itemCount: bottles.length,
-                            physics: const BouncingScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              return AnimatedBuilder(
-                                animation: _controller,
-                                builder: (context, child) {
-                                  final page = _controller.hasClients
-                                      ? (_controller.page ?? _controller.initialPage.toDouble())
-                                      : _controller.initialPage.toDouble();
+                        child: Container(
+  height: 500,
+  alignment: Alignment.topCenter,
+  margin: const EdgeInsets.only(top: 0),
+  child: PageView.builder(
+    controller: _controller,
+    itemCount: bottles.length,
+    physics: _isFocused
+        ? const NeverScrollableScrollPhysics()
+        : const BouncingScrollPhysics(),
+    itemBuilder: (context, index) {
 
-                                  final delta = index - page;
-                                  final distance = delta.abs().clamp(0.0, 1.0);
+      return AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return GestureDetector(
+            onTap: () {
+              final currentPage = _controller.page?.round() ?? 0;
+              setState(() {
+                if (_isFocused && index == _focusedIndex) {
+                  _isFocused = false;
+                  _focusedIndex = null;
+                } else if (!_isFocused && index == currentPage) {
+                  _isFocused = true;
+                  _focusedIndex = index ;
+                }
+              });
+            },
+            child: TweenAnimationBuilder<double>(
+  duration: const Duration(milliseconds: 500),
+  curve: Curves.easeInOut,
+  tween: Tween<double>(
+    begin: 1.0,
+    end: (_isFocused && index == _focusedIndex) ? 1.15 : 1.0,
+  ),
+  builder: (context, focusScale, child) {
+    final page = _controller.hasClients
+        ? (_controller.page ?? _controller.initialPage.toDouble())
+        : _controller.initialPage.toDouble();
+    final delta = index - page;
+    final distance = delta.abs().clamp(0.0, 1.0);
 
-                                  final scale = 1.0 - 0.4 * distance;
-                                  final opacity = 1.0 - 0.6 * distance;
-                                  final offsetX = -delta * 60.0;
-                                  final offsetY = delta * delta * 100.0;
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOut,
+      tween: Tween<double>(
+         begin: 0,
+        end: !_isFocused
+            ? 0.0
+            : (index == _focusedIndex ? 0.0 : (delta > 0 ? 90.0 : -90.0)),
+      ),
+      builder: (context, xShift, child) {
+        double baseScale = 1.0 - 0.4 * distance;
+        double opacity = 1.0 - 0.6 * distance;
+        double offsetY = delta * delta * 60.0 ;
 
-                                  return Transform.translate(
-                                    offset: Offset(offsetX, offsetY),
-                                    child: Transform.scale(
-                                      scale: scale,
-                                      child: Opacity(
-                                        opacity: opacity,
-                                        child: Image.asset(
-                                          bottles[index].imagePath,
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..translate(  -delta * 60.0 + xShift, offsetY)
+            ..scale(baseScale * focusScale),
+          child: Opacity(
+            opacity: opacity,
+            child: Image.asset(
+              bottles[index].imagePath,
+              fit: BoxFit.contain,
+            ),
+          ),
+        );
+      },
+    );
+  },
+),
+
+
+          );
+
+        },
+      );
+    },
+  ),
+),
+),
                       const SizedBox(height: 12),
                       composerBar(), // <- only text field + send button
                     ],
