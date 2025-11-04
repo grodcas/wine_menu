@@ -83,79 +83,47 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         // --- PageView Carousel section ---
                         Container(
-  height: 500,
-  alignment: Alignment.topCenter,
-  margin: const EdgeInsets.only(top: 0),
-  child: PageView.builder(
-    controller: _controller,
-    itemCount: bottles.length,
-    physics: _isFocused
-        ? const NeverScrollableScrollPhysics()
-        : const BouncingScrollPhysics(),
-    itemBuilder: (context, index) {
-      return AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          final page = _controller.hasClients
-              ? (_controller.page ?? _controller.initialPage.toDouble())
-              : _controller.initialPage.toDouble();
+                          height: 500,
+                          alignment: Alignment.topCenter,
+                          margin: const EdgeInsets.only(top: 0),
+                          child: PageView.builder(
+                            controller: _controller,
+                            itemCount: bottles.length,
+                            physics: const BouncingScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              return AnimatedBuilder(
+                                animation: _controller,
+                                builder: (context, child) {
+                                  final page = _controller.hasClients
+                                      ? (_controller.page ?? _controller.initialPage.toDouble())
+                                      : _controller.initialPage.toDouble();
 
-          final delta = index - page;
-          final distance = delta.abs().clamp(0.0, 1.0);
+                                  final delta = index - page;
+                                  final distance = delta.abs().clamp(0.0, 1.0);
 
-          // base transform
-          double scale = 1.0 - 0.4 * distance;
-          double opacity = 1.0 - 0.6 * distance;
-          double offsetX = -delta * 60.0;
-          double offsetY = delta * delta * 100.0;
+                                  final scale = 1.0 - 0.4 * distance;
+                                  final opacity = 1.0 - 0.6 * distance;
+                                  final offsetX = -delta * 60.0;
+                                  final offsetY = delta * delta * 100.0;
 
-          // if focused -> animate center bottle bigger and others off-screen
-          if (_isFocused) {
-            if (index == _focusedIndex) {
-              scale = 1.4;
-              offsetX = 0;
-            } else {
-              offsetX = delta > 0 ? 300 : -300;
-              opacity = 0;
-            }
-          }
-
-          return GestureDetector(
-            onTap: () {
-              final currentPage = _controller.page?.round() ?? 0;
-              if (_isFocused && index == _focusedIndex) {
-                setState(() {
-                  _isFocused = false;
-                  _focusedIndex = null;
-                });
-              } else if (!_isFocused && index == currentPage) {
-                setState(() {
-                  _isFocused = true;
-                  _focusedIndex = index;
-                });
-              }
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-              transform: Matrix4.identity()
-                ..translate(offsetX, offsetY)
-                ..scale(scale),
-              child: Opacity(
-                opacity: opacity,
-                child: Image.asset(
-                  bottles[index].imagePath,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    },
-  ),
-),
-
+                                  return Transform.translate(
+                                    offset: Offset(offsetX, offsetY),
+                                    child: Transform.scale(
+                                      scale: scale,
+                                      child: Opacity(
+                                        opacity: opacity,
+                                        child: Image.asset(
+                                          bottles[index].imagePath,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
                       const SizedBox(height: 12),
                       composerBar(), // <- only text field + send button
                     ],
